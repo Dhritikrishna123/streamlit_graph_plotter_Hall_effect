@@ -1,61 +1,61 @@
-import os
-import numpy as np
-import matplotlib.pyplot as plt
 import streamlit as st
+import matplotlib.pyplot as plt
+import numpy as np
 
-# Directory to save graphs
-save_dir = os.path.join(os.getcwd(), 'saved_graphs')
-if not os.path.exists(save_dir):
-    os.makedirs(save_dir)
-
-st.title('Hall Voltage Graph Plotter')
-st.write("Enter comma-separated values for I_x, V_h for I_x, B_z, and V_h for B_z.")
-
-# Input fields
-ix_input = st.text_input('Enter I_x values (in A, comma-separated)', '0.1, 0.2, 0.3')
-vh_input1 = st.text_input('Enter V_h values for I_x (in mV, comma-separated)', '1.0, 2.0, 3.0')
-bz_input = st.text_input('Enter B_z values (in Wb/cm², comma-separated)', '0.1, 0.2, 0.3')
-vh_input2 = st.text_input('Enter V_h values for B_z (in mV, comma-separated)', '1.0, 2.0, 3.0')
-
-# Process inputs when the button is clicked
-if st.button('Plot and Save Graphs'):
-    try:
-        # Convert inputs to numpy arrays
-        ix_values = np.array([float(x) for x in ix_input.split(',')])
-        vh_values1 = np.array([float(x) for x in vh_input1.split(',')])
-        bz_values = np.array([float(x) for x in bz_input.split(',')])
-        vh_values2 = np.array([float(x) for x in vh_input2.split(',')])
-
-        # Validate input lengths
-        if len(ix_values) != len(vh_values1) or len(bz_values) != len(vh_values2):
-            st.error("Input arrays must have the same length.")
-        else:
-            # Create plots
-            fig, axs = plt.subplots(2, 1, figsize=(8, 10))
-
-            # V_h vs I_x
-            axs[0].plot(ix_values, vh_values1, marker='o', linestyle='-', color='blue')
-            axs[0].set_title(r'Hall Voltage ($V_h$) vs Current ($I_x$)')
-            axs[0].set_xlabel(r'Current ($I_x$) in A')
-            axs[0].set_ylabel(r'Hall Voltage ($V_h$) in mV')
-            axs[0].grid(True)
-
-            # V_h vs B_z
-            axs[1].plot(bz_values, vh_values2, marker='o', linestyle='-', color='green')
-            axs[1].set_title(r'Hall Voltage ($V_h$) vs Magnetic Field ($B_z$)')
-            axs[1].set_xlabel(r'Magnetic Field ($B_z$) in Wb/cm²')
-            axs[1].set_ylabel(r'Hall Voltage ($V_h$) in mV')
-            axs[1].grid(True)
-
-            # Save the figure as a PDF
-            pdf_file_path = os.path.join(save_dir, 'Hall_Voltage_Graphs.pdf')
-            fig.tight_layout()
-            plt.savefig(pdf_file_path)
-            st.pyplot(fig)
-
-            st.success(f"Graphs saved to {pdf_file_path}")
-            st.write(f"[Download the PDF](./saved_graphs/Hall_Voltage_Graphs.pdf)")
-    except ValueError as e:
-        st.error(f"Please enter valid numbers: {e}")
-
+# App title and creator
+st.title("Voltage vs Current (V-I) Plotter")
 st.write("Created by Dhritikrishna Tripathi")
+
+# Instructions
+st.markdown("### Enter Voltage and Current values:")
+st.write("Enter the values as comma-separated numbers (e.g., 0.5, 1.0, 1.5)")
+
+# User input for voltages and currents
+voltages = st.text_input("Voltage values (in V):", "0.5, 1.0, 1.5, 2.0, 2.5, 3.0")
+low_intensity = st.text_input("Current values for Low Intensity (in mA):", "0.44, 0.47, 0.51, 0.54, 0.57, 0.60")
+medium_intensity = st.text_input("Current values for Medium Intensity (in mA):", "3.32, 5.20, 5.68, 6.08, 6.57, 7.01")
+high_intensity = st.text_input("Current values for High Intensity (in mA):", "5.07, 8.72, 9.76, 10.68, 11.60, 12.55")
+
+# Convert input strings to lists of floats
+try:
+    voltages = [float(v) for v in voltages.split(",")]
+    low_intensity = [float(v) for v in low_intensity.split(",")]
+    medium_intensity = [float(v) for v in medium_intensity.split(",")]
+    high_intensity = [float(v) for v in high_intensity.split(",")]
+
+    # Ensure that all input lists have the same length
+    if len(voltages) == len(low_intensity) == len(medium_intensity) == len(high_intensity):
+        # Plot the data
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(voltages, low_intensity, marker='o', linestyle='-', color='blue', label='Low Intensity')
+        ax.plot(voltages, medium_intensity, marker='o', linestyle='-', color='green', label='Medium Intensity')
+        ax.plot(voltages, high_intensity, marker='o', linestyle='-', color='red', label='High Intensity')
+
+        # Add titles and labels
+        ax.set_title('Voltage vs Current (V-I)', fontsize=16)
+        ax.set_xlabel('Voltage (V)', fontsize=14)
+        ax.set_ylabel('Current (mA)', fontsize=14)
+        ax.grid(True)
+
+        # Add a legend
+        ax.legend()
+
+        # Display the plot in the Streamlit app
+        st.pyplot(fig)
+
+        # Provide a download button for the plot
+        from io import BytesIO
+        buffer = BytesIO()
+        fig.savefig(buffer, format='pdf')
+        buffer.seek(0)
+
+        st.download_button(
+            label="Download Plot as PDF",
+            data=buffer,
+            file_name="voltage_current_plot.pdf",
+            mime="application/pdf"
+        )
+    else:
+        st.error("All input lists must have the same length.")
+except ValueError:
+    st.error("Please enter valid comma-separated numbers.")
